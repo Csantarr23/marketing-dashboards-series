@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D05 — La oferta se come al embudo</title>
+<style>
+:root {
+  --c-bg:      #08080F;
+  --c-accent:  #FF4B14;
+  --c-white:   #F5F5F7;
+  --c-surface: #13131E;
+  --c-muted:   #4A4A62;
+  --c-rule:    #1F1F30;
+  --c-red:     #D93A3A;
+  --c-teal:    #22D3AA;
+  --c-blue:    #5B8CFF;
+  --c-amber:   #F5A623;
+  --font-d: 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial', sans-serif;
+  --font-s: 'Helvetica Neue', 'Segoe UI', 'Arial', sans-serif;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+
+#canvas {
+  width: 1080px; height: 1920px;
+  overflow: hidden;
+  background: var(--c-bg); color: var(--c-white);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 112px 88px 100px;
+  transform-origin: top left;
+  position: absolute; top: 0; left: 0;
+}
+
+.appear { opacity: 0; transform: translateY(18px); }
+.rule   { width: 100%; height: 1px; background: var(--c-rule); }
+
+/* ── Header ──────────────────────────────────────────── */
+.hdr { display: flex; flex-direction: column; gap: 22px; }
+.hdr__tag {
+  font-family: var(--font-s);
+  font-size: 25px; font-weight: 600;
+  letter-spacing: .28em; text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+/* ── Hook ────────────────────────────────────────────── */
+.hook__q {
+  font-family: var(--font-s);
+  font-size: 25px; font-weight: 400;
+  line-height: 1.55; letter-spacing: .02em;
+  color: #7A7A96;
+}
+
+/* ── Fichas section ──────────────────────────────────── */
+.fichas-section { display: flex; flex-direction: column; gap: 18px; }
+.fichas-row     { display: flex; gap: 18px; }
+
+.ficha {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; height: 112px;
+  border-radius: 14px;
+  border-width: 1.5px;
+  border-style: solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.ficha--landing {
+  background: #060B18;
+  border-color: #2A3E7A;
+  box-shadow: 0 0 28px rgba(91,140,255,.22), 0 0 60px rgba(91,140,255,.08);
+}
+.ficha--vsl {
+  background: #110C02;
+  border-color: #7A5A0A;
+  box-shadow: 0 0 28px rgba(245,166,35,.22), 0 0 60px rgba(245,166,35,.08);
+}
+.ficha--pixel {
+  background: #020F0D;
+  border-color: #0D5446;
+  box-shadow: 0 0 28px rgba(34,211,170,.22), 0 0 60px rgba(34,211,170,.08);
+}
+
+.ficha__name {
+  font-family: var(--font-d);
+  font-size: 30px; font-weight: 900;
+  letter-spacing: .06em; line-height: 1;
+}
+.ficha--landing .ficha__name {
+  color: var(--c-blue);
+  text-shadow: 0 0 18px rgba(91,140,255,.7), 0 0 36px rgba(91,140,255,.25);
+}
+.ficha--vsl .ficha__name {
+  color: var(--c-amber);
+  text-shadow: 0 0 18px rgba(245,166,35,.7), 0 0 36px rgba(245,166,35,.25);
+}
+.ficha--pixel .ficha__name {
+  color: var(--c-teal);
+  text-shadow: 0 0 18px rgba(34,211,170,.7), 0 0 36px rgba(34,211,170,.25);
+}
+
+.ficha__sub {
+  font-family: var(--font-s);
+  font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+}
+.ficha--landing .ficha__sub { color: rgba(91,140,255,.5); }
+.ficha--vsl     .ficha__sub { color: rgba(245,166,35,.5); }
+.ficha--pixel   .ficha__sub { color: rgba(34,211,170,.5); }
+
+/* Mult connector */
+.mult-connector {
+  display: flex; align-items: center; gap: 14px;
+  justify-content: center;
+}
+.mult-connector__sign {
+  font-family: var(--font-s);
+  font-size: 22px; font-weight: 300;
+  color: #2E2E44; letter-spacing: .1em;
+  white-space: nowrap;
+}
+.mult-connector__line { flex: 1; height: 1px; background: #181826; }
+
+/* ── Oferta block ────────────────────────────────────── */
+.oferta-block {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; padding: 28px;
+  background: #0C0609;
+  border: 2.5px solid var(--c-accent);
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(255,75,20,.22), 0 0 80px rgba(255,75,20,.08);
+  opacity: 0;
+}
+.oferta__label {
+  font-family: var(--font-d);
+  font-size: 106px; font-weight: 900;
+  letter-spacing: .06em; line-height: 1;
+  color: var(--c-accent);
+  text-shadow:
+    0 0 28px rgba(255,75,20,.7),
+    0 0 60px rgba(255,75,20,.25);
+}
+.oferta__sub {
+  font-family: var(--font-s);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: .34em; text-transform: uppercase;
+  color: rgba(255,75,20,.55);
+}
+
+/* ── Formula ─────────────────────────────────────────── */
+.formula {
+  display: flex; align-items: baseline;
+  justify-content: center; flex-wrap: wrap;
+  font-family: var(--font-s);
+  font-size: 16px; letter-spacing: .04em;
+}
+.f-par  { color: #2A2A3E; }
+.f-item { color: #36364E; }
+.f-sep  { color: #252540; margin: 0 6px; }
+.f-op   { color: #4A4A62; margin: 0 8px; font-weight: 600; }
+.f-acc  { color: var(--c-accent); font-weight: 700; margin: 0 2px; }
+
+/* ── Scenarios ───────────────────────────────────────── */
+.scenario-wrap { position: relative; height: 148px; }
+.scenario {
+  position: absolute; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; gap: 22px;
+  padding: 26px 30px;
+  background: #0C0C18;
+  border: 1px solid #1C1C2C;
+  border-radius: 14px;
+  transition: opacity 0.45s ease;
+}
+.sc-icon {
+  font-family: var(--font-d);
+  font-size: 48px; line-height: 1;
+  width: 56px; text-align: center; flex-shrink: 0;
+}
+.sc-icon--bad  { color: var(--c-red); }
+.sc-icon--good { color: var(--c-teal); }
+.sc-body { display: flex; flex-direction: column; gap: 8px; }
+.sc-formula {
+  font-family: var(--font-s);
+  font-size: 19px; color: var(--c-muted); line-height: 1.3;
+}
+.sc-formula b   { color: var(--c-white); font-weight: 600; }
+.sc-formula .v-bad  { color: var(--c-red);    font-weight: 600; }
+.sc-formula .v-good { color: var(--c-accent);  font-weight: 700; }
+.sc-verdict {
+  font-family: var(--font-d);
+  font-size: 30px; line-height: 1; letter-spacing: .04em;
+}
+.sc-verdict--bad  { color: var(--c-red); }
+.sc-verdict--good { color: var(--c-teal); }
+
+/* ── Footer ──────────────────────────────────────────── */
+.ftr { display: flex; flex-direction: column; gap: 22px; }
+.ftr__cta {
+  font-family: var(--font-s);
+  font-size: 19px; font-weight: 500;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--c-muted); text-align: center; line-height: 1.6;
+}
+.ftr__cta em { font-style: normal; color: var(--c-accent); }
+
+/* ── Keyframes ────────────────────────────────────────── */
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ofertaFall {
+  0%   { opacity: 0; transform: translateY(-28px) scale(0.88); }
+  55%  { transform: translateY(5px) scale(1.008); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ofertaPulse {
+  0%,100% { box-shadow: 0 0 40px rgba(255,75,20,.22), 0 0 80px rgba(255,75,20,.08); }
+  50%      { box-shadow: 0 0 70px rgba(255,75,20,.55), 0 0 130px rgba(255,75,20,.2); }
+}
+@keyframes fichaPulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: .75; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appear { opacity: 1 !important; transform: none !important; }
+  .oferta-block { opacity: 1 !important; }
+  * { animation-duration: 1ms !important; }
+}
+</style>
+</head>
+<body>
+<div id="canvas">
+
+<div class="hdr appear" id="a-hdr">
+  <span class="hdr__tag">La oferta se come al embudo</span>
+  <div class="rule"></div>
+</div>
+
+<p class="hook__q appear" id="a-hook">
+  "El mejor embudo del mundo<br>no va a salvar una oferta mediocre."
+</p>
+
+<!-- Fichas + multiplicador -->
+<div class="fichas-section">
+  <div class="fichas-row">
+    <div class="ficha ficha--landing appear" id="fc1">
+      <span class="ficha__name">LANDING</span>
+      <span class="ficha__sub">Copy · Diseño · CRO</span>
+    </div>
+    <div class="ficha ficha--vsl appear" id="fc2">
+      <span class="ficha__name">VSL</span>
+      <span class="ficha__sub">Guion · Edición · Hook</span>
+    </div>
+    <div class="ficha ficha--pixel appear" id="fc3">
+      <span class="ficha__name">PIXEL</span>
+      <span class="ficha__sub">Segmentación · Eventos</span>
+    </div>
+  </div>
+  <div class="mult-connector appear" id="a-mult">
+    <div class="mult-connector__line"></div>
+    <span class="mult-connector__sign">× multiplicado por</span>
+    <div class="mult-connector__line"></div>
+  </div>
+</div>
+
+<!-- OFERTA -->
+<div class="oferta-block" id="a-oferta">
+  <span class="oferta__label">OFERTA</span>
+  <span class="oferta__sub">El multiplicador real</span>
+</div>
+
+<!-- Ecuación -->
+<div class="formula appear" id="a-formula">
+  <span class="f-par">(</span>
+  <span class="f-item">Landing</span>
+  <span class="f-sep">+</span>
+  <span class="f-item">VSL</span>
+  <span class="f-sep">+</span>
+  <span class="f-item">Pixel</span>
+  <span class="f-par">)</span>
+  <span class="f-op">×</span>
+  <span class="f-acc">OFERTA</span>
+  <span class="f-op">=</span>
+  <span class="f-op">resultado</span>
+</div>
+
+<!-- Escenarios alternantes -->
+<div class="scenario-wrap appear" id="a-scenarios">
+  <div class="scenario" id="sc-a">
+    <span class="sc-icon sc-icon--bad">✕</span>
+    <div class="sc-body">
+      <p class="sc-formula"><b>Embudo perfecto</b> <span style="color:#36364E"> × </span> <span class="v-bad">Oferta mediocre</span></p>
+      <p class="sc-verdict sc-verdict--bad">más NOs, más rápido</p>
+    </div>
+  </div>
+  <div class="scenario" id="sc-b" style="opacity:0">
+    <span class="sc-icon sc-icon--good">✓</span>
+    <div class="sc-body">
+      <p class="sc-formula"><b>Embudo flojo</b> <span style="color:#36364E"> × </span> <span class="v-good">Oferta irresistible</span></p>
+      <p class="sc-verdict sc-verdict--good">CONVIERTE</p>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="ftr appear" id="a-ftr">
+  <div class="rule"></div>
+  <p class="ftr__cta">Primero <em>valida la oferta</em> · Luego construye el embudo</p>
+</div>
+
+</div>
+
+<script>
+/* ╔═══════════════════════════════════════════════════════╗
+   ║  CONSTANTES EDITABLES — Dashboard 05                 ║
+   ╚═══════════════════════════════════════════════════════╝ */
+const TIMINGS = {
+  hdr:          80,
+  hook:         280,
+  fc1:          480,
+  fc2:          640,
+  fc3:          800,
+  mult:         1020,
+  oferta:       1220,  oferta_dur: 650,
+  pulse:        2000,
+  formula:      2100,
+  scenarios:    2400,
+  alt_start:    3000,
+  alt_interval: 3200,
+  ftr:          3500,
+};
+
+const $ = id => document.getElementById(id);
+function at(ms, fn) { setTimeout(fn, ms); }
+
+function reveal(id) {
+  const el = $(id); if (!el) return;
+  el.style.animation = 'fadeUp .44s cubic-bezier(.22,.68,0,1.2) forwards';
+}
+
+at(TIMINGS.hdr,       () => reveal('a-hdr'));
+at(TIMINGS.hook,      () => reveal('a-hook'));
+at(TIMINGS.fc1,       () => reveal('fc1'));
+at(TIMINGS.fc2,       () => reveal('fc2'));
+at(TIMINGS.fc3,       () => reveal('fc3'));
+at(TIMINGS.mult,      () => reveal('a-mult'));
+at(TIMINGS.formula,   () => reveal('a-formula'));
+at(TIMINGS.scenarios, () => reveal('a-scenarios'));
+at(TIMINGS.ftr,       () => reveal('a-ftr'));
+
+/* Caída OFERTA */
+at(TIMINGS.oferta, () => {
+  const el = $('a-oferta');
+  el.style.animation =
+    'ofertaFall ' + TIMINGS.oferta_dur + 'ms cubic-bezier(.34,1.56,.64,1) forwards';
+});
+at(TIMINGS.pulse, () => {
+  const el = $('a-oferta');
+  el.style.animation = 'ofertaPulse 0.7s ease-in-out';
+  el.addEventListener('animationend', () => {
+    el.style.animation = '';
+    el.style.opacity   = '1';
+    el.style.transform = 'none';
+  }, { once: true });
+});
+
+/* Alternancia escenarios */
+let showingA = true;
+function toggleScenario() {
+  const a = $('sc-a'), b = $('sc-b');
+  if (!a || !b) return;
+  if (showingA) { a.style.opacity = '0'; b.style.opacity = '1'; }
+  else          { b.style.opacity = '0'; a.style.opacity = '1'; }
+  showingA = !showingA;
+}
+at(TIMINGS.alt_start, () => {
+  toggleScenario();
+  setInterval(toggleScenario, TIMINGS.alt_interval);
+});
+</script>
+
+<script>
+(function () {
+  const c = document.getElementById('canvas');
+  function fit() {
+    const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+    c.style.transform = 'scale(' + s + ')';
+    c.style.left = ((window.innerWidth  - 1080 * s) / 2) + 'px';
+    c.style.top  = ((window.innerHeight - 1920 * s) / 2) + 'px';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

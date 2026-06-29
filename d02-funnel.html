@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D02 — El Embudo</title>
+<style>
+:root {
+  --c-bg:      #08080F;
+  --c-accent:  #FF4B14;
+  --c-white:   #F5F5F7;
+  --c-surface: #13131E;
+  --c-muted:   #4A4A62;
+  --c-rule:    #1F1F30;
+  --font-d: 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial', sans-serif;
+  --font-s: 'Helvetica Neue', 'Segoe UI', 'Arial', sans-serif;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+
+#canvas {
+  width: 1080px; height: 1920px;
+  overflow: hidden;
+  background: var(--c-bg); color: var(--c-white);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 112px 88px 100px;
+  transform-origin: top left;
+  position: absolute; top: 0; left: 0;
+}
+
+.appear { opacity: 0; transform: translateY(20px); }
+.rule   { width: 100%; height: 1px; background: var(--c-rule); }
+
+/* ── Header ──────────────────────────────────────────── */
+.hdr { display: flex; flex-direction: column; gap: 26px; }
+.hdr__tag {
+  font-family: var(--font-s);
+  font-size: 25px; font-weight: 600;
+  letter-spacing: .28em; text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+/* ── Hook ────────────────────────────────────────────── */
+.hook {
+  font-family: var(--font-s);
+  font-size: 26px; font-weight: 400;
+  line-height: 1.52; color: #7A7A96;
+}
+
+/* ── Funnel SVG wrapper ──────────────────────────────── */
+.funnel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Stage rows ──────────────────────────────────────── */
+.stages { display: flex; flex-direction: column; gap: 0; }
+
+.stage {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--c-rule);
+}
+.stage:last-child { border-bottom: none; }
+
+.stage__bar-wrap {
+  width: 6px;
+  background: var(--c-rule);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.stage__bar-fill {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: var(--c-accent);
+  transition: height 1.2s cubic-bezier(.25,.8,.25,1);
+  height: 0%;
+}
+
+.stage__content {
+  flex: 1;
+  padding: 36px 0 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stage__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.stage__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.stage__name {
+  font-family: var(--font-s);
+  font-size: 20px; font-weight: 600;
+  letter-spacing: .22em; text-transform: uppercase;
+  color: var(--c-muted);
+}
+.stage__num {
+  font-family: var(--font-d);
+  font-size: 88px; font-weight: 900;
+  line-height: .92; letter-spacing: -.01em;
+  color: var(--c-white);
+}
+.stage__unit {
+  font-family: var(--font-s);
+  font-size: 16px; font-weight: 400;
+  letter-spacing: .14em; color: var(--c-muted);
+  margin-top: 2px;
+}
+
+.stage__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 36px 0 36px 0;
+  min-width: 160px;
+  gap: 4px;
+}
+.stage__pct {
+  font-family: var(--font-d);
+  font-size: 36px; font-weight: 900;
+  line-height: 1;
+}
+.stage__pct-label {
+  font-family: var(--font-s);
+  font-size: 11px; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--c-muted);
+}
+
+/* ── Insight box ─────────────────────────────────────── */
+.insight {
+  background: #0D0D1A;
+  border: 1px solid #1C1C2C;
+  border-left: 3px solid var(--c-accent);
+  border-radius: 12px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.insight__label {
+  font-family: var(--font-s);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: .28em; text-transform: uppercase;
+  color: var(--c-accent); opacity: .8;
+}
+.insight__text {
+  font-family: var(--font-s);
+  font-size: 22px; font-weight: 400;
+  line-height: 1.5; color: var(--c-white);
+}
+.insight__text em {
+  font-style: normal; color: var(--c-accent); font-weight: 600;
+}
+
+/* ── Footer ──────────────────────────────────────────── */
+.ftr { display: flex; flex-direction: column; gap: 22px; }
+.ftr__label {
+  font-family: var(--font-s);
+  font-size: 19px; font-weight: 400;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--c-muted); text-align: center;
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .appear { opacity: 1 !important; transform: none !important; }
+  * { animation-duration: 1ms !important; }
+}
+</style>
+</head>
+<body>
+<div id="canvas">
+
+<!-- Header -->
+<div class="hdr appear" id="a-hdr">
+  <span class="hdr__tag">Estructura de Embudo</span>
+  <div class="rule"></div>
+</div>
+
+<!-- Hook -->
+<p class="hook appear" id="a-hook">
+  "No puedes optimizar lo que<br>no entiendes primero."
+</p>
+
+<!-- Stages funnel -->
+<div class="stages appear" id="a-stages">
+
+  <!-- Etapa 1: Alcance -->
+  <div class="stage">
+    <div class="stage__bar-wrap">
+      <div class="stage__bar-fill" id="bar-1" style="--target:100%"></div>
+    </div>
+    <div class="stage__content">
+      <div class="stage__meta">
+        <span class="stage__dot" style="background:#5B8CFF"></span>
+        <span class="stage__name">Alcance</span>
+      </div>
+      <div class="stage__num" id="num-1">0</div>
+      <div class="stage__unit">personas impactadas</div>
+    </div>
+    <div class="stage__right">
+      <span class="stage__pct" style="color:#5B8CFF">100%</span>
+      <span class="stage__pct-label">del total</span>
+    </div>
+  </div>
+
+  <!-- Etapa 2: Clic -->
+  <div class="stage">
+    <div class="stage__bar-wrap">
+      <div class="stage__bar-fill" id="bar-2" style="background:#F59E0B"></div>
+    </div>
+    <div class="stage__content">
+      <div class="stage__meta">
+        <span class="stage__dot" style="background:#F59E0B"></span>
+        <span class="stage__name">Clic</span>
+      </div>
+      <div class="stage__num" id="num-2">0</div>
+      <div class="stage__unit">visitas a la landing</div>
+    </div>
+    <div class="stage__right">
+      <span class="stage__pct" id="pct-2" style="color:#F59E0B">0%</span>
+      <span class="stage__pct-label">CTR</span>
+    </div>
+  </div>
+
+  <!-- Etapa 3: Lead -->
+  <div class="stage">
+    <div class="stage__bar-wrap">
+      <div class="stage__bar-fill" id="bar-3" style="background:#22D3AA"></div>
+    </div>
+    <div class="stage__content">
+      <div class="stage__meta">
+        <span class="stage__dot" style="background:#22D3AA"></span>
+        <span class="stage__name">Lead</span>
+      </div>
+      <div class="stage__num" id="num-3">0</div>
+      <div class="stage__unit">mensajes recibidos</div>
+    </div>
+    <div class="stage__right">
+      <span class="stage__pct" id="pct-3" style="color:#22D3AA">0%</span>
+      <span class="stage__pct-label">conv. landing</span>
+    </div>
+  </div>
+
+  <!-- Etapa 4: Venta -->
+  <div class="stage">
+    <div class="stage__bar-wrap">
+      <div class="stage__bar-fill" id="bar-4" style="background:#FF4B14"></div>
+    </div>
+    <div class="stage__content">
+      <div class="stage__meta">
+        <span class="stage__dot" style="background:#FF4B14"></span>
+        <span class="stage__name">Venta</span>
+      </div>
+      <div class="stage__num" id="num-4">0</div>
+      <div class="stage__unit">clientes cerrados</div>
+    </div>
+    <div class="stage__right">
+      <span class="stage__pct" id="pct-4" style="color:#FF4B14">0%</span>
+      <span class="stage__pct-label">cierre</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Insight -->
+<div class="insight appear" id="a-insight">
+  <span class="insight__label">El cuello de botella</span>
+  <p class="insight__text">
+    Cada etapa perdida es dinero que ya gastaste.<br>
+    <em>Corrige el eslabón más débil primero.</em>
+  </p>
+</div>
+
+<!-- Footer -->
+<div class="ftr appear" id="a-ftr">
+  <div class="rule"></div>
+  <span class="ftr__label">Mide cada etapa · Optimiza la más débil</span>
+</div>
+
+</div>
+
+<script>
+/* ╔═══════════════════════════════════════════════════════╗
+   ║  CONSTANTES EDITABLES — Dashboard 02                 ║
+   ╚═══════════════════════════════════════════════════════╝ */
+
+const CIFRAS = {
+  alcance: 48000,
+  clics:    1440,
+  leads:     216,
+  ventas:     31,
+  ctr:       3.0,   // %
+  conv_lead: 15.0,  // %
+  cierre:    14.4,  // %
+};
+
+const TIMINGS = {
+  hdr:      80,
+  hook:     300,
+  stages:   520,
+  bar1:     680,   bar1_dur: 800,
+  num1:     720,   num1_dur: 900,
+  bar2:     1100,  bar2_dur: 700,
+  num2:     1140,  num2_dur: 800,
+  bar3:     1520,  bar3_dur: 700,
+  num3:     1560,  num3_dur: 800,
+  bar4:     1940,  bar4_dur: 700,
+  num4:     1980,  num4_dur: 800,
+  insight:  2500,
+  ftr:      2900,
+};
+
+const $ = id => document.getElementById(id);
+function at(ms, fn) { setTimeout(fn, ms); }
+
+function reveal(id) {
+  const el = $(id); if (!el) return;
+  el.style.animation = 'fadeUp .48s cubic-bezier(.22,.68,0,1.2) forwards';
+}
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function countUp(elId, to, startMs, dur, fmt) {
+  at(startMs, () => {
+    const t0 = performance.now();
+    const el = $(elId);
+    (function tick(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      el.textContent = fmt(to * easeOutCubic(p));
+      if (p < 1) requestAnimationFrame(tick);
+    })(performance.now());
+  });
+}
+
+function fillBar(barId, pct, startMs, dur) {
+  at(startMs, () => {
+    const bar = $(barId);
+    bar.style.transition = 'height ' + dur + 'ms cubic-bezier(.25,.8,.25,1)';
+    setTimeout(() => bar.style.height = pct + '%', 20);
+  });
+}
+
+/* Apariciones */
+reveal('a-hdr');
+at(TIMINGS.hook,    () => reveal('a-hook'));
+at(TIMINGS.stages,  () => reveal('a-stages'));
+at(TIMINGS.insight, () => reveal('a-insight'));
+at(TIMINGS.ftr,     () => reveal('a-ftr'));
+
+/* Barras */
+fillBar('bar-1', 100, TIMINGS.bar1, TIMINGS.bar1_dur);
+fillBar('bar-2', Math.round(CIFRAS.clics / CIFRAS.alcance * 100), TIMINGS.bar2, TIMINGS.bar2_dur);
+fillBar('bar-3', Math.round(CIFRAS.leads / CIFRAS.alcance * 100), TIMINGS.bar3, TIMINGS.bar3_dur);
+fillBar('bar-4', Math.round(CIFRAS.ventas / CIFRAS.alcance * 100), TIMINGS.bar4, TIMINGS.bar4_dur);
+
+/* Contadores */
+const fmt = n => Math.round(n).toLocaleString('es-MX');
+countUp('num-1', CIFRAS.alcance, TIMINGS.num1, TIMINGS.num1_dur, fmt);
+countUp('num-2', CIFRAS.clics,   TIMINGS.num2, TIMINGS.num2_dur, fmt);
+countUp('num-3', CIFRAS.leads,   TIMINGS.num3, TIMINGS.num3_dur, fmt);
+countUp('num-4', CIFRAS.ventas,  TIMINGS.num4, TIMINGS.num4_dur, fmt);
+
+/* Porcentajes */
+at(TIMINGS.num2 + TIMINGS.num2_dur, () => $('pct-2').textContent = CIFRAS.ctr.toFixed(1) + '%');
+at(TIMINGS.num3 + TIMINGS.num3_dur, () => $('pct-3').textContent = CIFRAS.conv_lead.toFixed(1) + '%');
+at(TIMINGS.num4 + TIMINGS.num4_dur, () => $('pct-4').textContent = CIFRAS.cierre.toFixed(1) + '%');
+</script>
+
+<script>
+(function () {
+  const c = document.getElementById('canvas');
+  function fit() {
+    const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+    c.style.transform = 'scale(' + s + ')';
+    c.style.left = ((window.innerWidth  - 1080 * s) / 2) + 'px';
+    c.style.top  = ((window.innerHeight - 1920 * s) / 2) + 'px';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

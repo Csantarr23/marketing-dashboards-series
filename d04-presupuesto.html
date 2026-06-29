@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D04 — Duplicar presupuesto ≠ duplicar ventas</title>
+<style>
+:root {
+  --c-bg:      #08080F;
+  --c-accent:  #FF4B14;
+  --c-white:   #F5F5F7;
+  --c-surface: #13131E;
+  --c-muted:   #4A4A62;
+  --c-rule:    #1F1F30;
+  --font-d: 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial', sans-serif;
+  --font-s: 'Helvetica Neue', 'Segoe UI', 'Arial', sans-serif;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+
+#canvas {
+  width: 1080px; height: 1920px;
+  overflow: hidden;
+  background: var(--c-bg); color: var(--c-white);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 112px 88px 100px;
+  transform-origin: top left;
+  position: absolute; top: 0; left: 0;
+}
+
+.appear { opacity: 0; transform: translateY(20px); }
+.rule   { width: 100%; height: 1px; background: var(--c-rule); }
+
+/* Header */
+.hdr { display: flex; flex-direction: column; gap: 26px; }
+.hdr__tag {
+  font-family: var(--font-s);
+  font-size: 25px; font-weight: 600;
+  letter-spacing: .28em; text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+/* Hook */
+.hook { display: flex; flex-direction: column; gap: 12px; }
+.hook__quote {
+  font-family: var(--font-s);
+  font-size: 24px; font-weight: 400;
+  line-height: 1.52; color: #7A7A96;
+}
+.hook__punch {
+  font-family: var(--font-d);
+  font-size: 72px; font-weight: 900;
+  line-height: .92; letter-spacing: .01em;
+  color: var(--c-accent);
+  text-shadow: 0 0 30px rgba(255,75,20,.5);
+}
+
+/* Chart */
+.chart-wrap {
+  position: relative;
+}
+
+/* Legend */
+.legend {
+  display: flex; gap: 28px;
+  margin-bottom: 18px;
+}
+.leg-item {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-s);
+  font-size: 16px; color: var(--c-muted);
+}
+.leg-dash {
+  width: 28px; height: 2px;
+}
+.leg-solid {
+  width: 28px; height: 2px;
+  background: var(--c-accent);
+}
+
+/* CTA card */
+.cta-card {
+  background: #0D0D1A;
+  border: 1.5px solid var(--c-accent);
+  border-radius: 14px;
+  padding: 30px 36px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.cta-label {
+  font-family: var(--font-s);
+  font-size: 13px; font-weight: 600;
+  letter-spacing: .3em; text-transform: uppercase;
+  color: rgba(255,75,20,.7);
+}
+.cta-num {
+  display: flex; align-items: baseline; gap: 6px;
+}
+.cta-pct {
+  font-family: var(--font-d);
+  font-size: 80px; font-weight: 900;
+  line-height: .92; color: var(--c-accent);
+  text-shadow: 0 0 24px rgba(255,75,20,.55);
+}
+.cta-unit {
+  font-family: var(--font-s);
+  font-size: 22px; color: var(--c-muted);
+}
+.cta-note {
+  font-family: var(--font-s);
+  font-size: 19px; line-height: 1.5; color: #5A5A72;
+}
+.cta-note em { font-style: normal; color: var(--c-white); }
+
+/* Footer */
+.ftr { display: flex; flex-direction: column; gap: 22px; }
+.ftr__label {
+  font-family: var(--font-s);
+  font-size: 19px; font-weight: 400;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--c-muted); text-align: center;
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes drawPath {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .appear { opacity: 1 !important; transform: none !important; }
+  * { animation-duration: 1ms !important; }
+}
+</style>
+</head>
+<body>
+<div id="canvas">
+
+<!-- Header -->
+<div class="hdr appear" id="a-hdr">
+  <span class="hdr__tag">Duplicar presupuesto ≠ Duplicar ventas</span>
+  <div class="rule"></div>
+</div>
+
+<!-- Hook -->
+<div class="hook appear" id="a-hook">
+  <p class="hook__quote">"Si duplicas el presupuesto<br>esperando el doble de ventas..."</p>
+  <span class="hook__punch">MALAS NOTICIAS.</span>
+</div>
+
+<!-- Chart -->
+<div class="chart-wrap appear" id="a-chart">
+  <div class="legend">
+    <div class="leg-item">
+      <div class="leg-dash" style="border-top: 2px dashed #9090A8"></div>
+      <span>Lo que esperas</span>
+    </div>
+    <div class="leg-item">
+      <div class="leg-solid"></div>
+      <span style="color:var(--c-accent)">Lo que pasa de verdad</span>
+    </div>
+  </div>
+
+  <svg id="chart-svg" viewBox="0 0 904 580" style="width:100%;display:block" xmlns="http://www.w3.org/2000/svg">
+    <!-- Axes -->
+    <line x1="88" y1="30" x2="88" y2="510" stroke="#2A2A3E" stroke-width="1.5"/>
+    <line x1="88" y1="510" x2="880" y2="510" stroke="#2A2A3E" stroke-width="1.5"/>
+    <!-- Arrowheads -->
+    <polygon points="83,30 88,16 93,30" fill="#2A2A3E"/>
+    <polygon points="866,505 880,510 866,515" fill="#2A2A3E"/>
+    <!-- Axis labels -->
+    <text x="40" y="272" fill="#4A4A62" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="14" letter-spacing="3" transform="rotate(-90,40,272)" text-anchor="middle">VENTAS</text>
+    <text x="484" y="550" fill="#4A4A62" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="14" letter-spacing="3" text-anchor="middle">PRESUPUESTO</text>
+    <!-- X ticks -->
+    <text x="88"  y="530" fill="#3A3A52" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="13" text-anchor="middle">×1</text>
+    <text x="396" y="530" fill="#3A3A52" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="13" text-anchor="middle">×2</text>
+    <text x="858" y="530" fill="#3A3A52" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="13" text-anchor="middle">×4</text>
+
+    <!-- Gap shaded area (fills after lines draw) -->
+    <!-- Path: from expected line top-right, back along real line, closed -->
+    <path id="gap-fill"
+      d="M88,510 L858,30 L858,245 C700,255 550,288 390,340 C280,372 180,400 88,510 Z"
+      fill="rgba(255,75,20,0.13)" opacity="0" />
+
+    <!-- Expected line: dashed diagonal -->
+    <line id="line-expected"
+      x1="88" y1="510" x2="858" y2="30"
+      stroke="#9090A8" stroke-width="2.5"
+      stroke-dasharray="10 7"
+      style="stroke-dashoffset:0; opacity:0"/>
+
+    <!-- Real line: rises then flattens (cubic bezier) -->
+    <path id="line-real"
+      d="M88,510 C180,480 280,420 390,340 C480,276 580,258 680,250 C760,244 820,244 858,245"
+      fill="none" stroke="#FF4B14" stroke-width="3.5" stroke-linecap="round"
+      style="opacity:0"/>
+
+    <!-- Gap label -->
+    <g id="gap-label" opacity="0">
+      <text x="668" y="140" fill="#FF4B14" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="2" text-anchor="middle">AQUÍ</text>
+      <text x="668" y="162" fill="#FF4B14" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="2" text-anchor="middle">QUEMAS</text>
+      <text x="668" y="184" fill="#FF4B14" font-family="Helvetica Neue,Segoe UI,Arial,sans-serif" font-size="17" font-weight="700" letter-spacing="2" text-anchor="middle">DINERO</text>
+    </g>
+  </svg>
+</div>
+
+<!-- CTA card -->
+<div class="cta-card appear" id="a-cta">
+  <span class="cta-label">Regla de oro para escalar</span>
+  <div class="cta-num">
+    <span class="cta-pct">+20%</span>
+    <span class="cta-unit">máx. por semana</span>
+  </div>
+  <p class="cta-note">
+    <em>Solo si el ROAS aguanta.</em><br>
+    Lo demás es quemar dinero.
+  </p>
+</div>
+
+<!-- Footer -->
+<div class="ftr appear" id="a-ftr">
+  <div class="rule"></div>
+  <span class="ftr__label">El presupuesto sigue a la estructura</span>
+</div>
+
+</div>
+
+<script>
+/* ╔═══════════════════════════════════════════════════════╗
+   ║  CONSTANTES EDITABLES — Dashboard 04                 ║
+   ╚═══════════════════════════════════════════════════════╝ */
+
+const TIMINGS = {
+  hdr:           80,
+  hook:          300,
+  chart:         560,
+  line_expected: 820,   line_expected_dur: 1200,
+  line_real:     980,   line_real_dur:     1600,
+  gap_fill:      2650,  gap_fill_dur:       600,
+  gap_label:     3000,
+  cta:           2900,
+  ftr:           3400,
+};
+
+const $ = id => document.getElementById(id);
+function at(ms, fn) { setTimeout(fn, ms); }
+
+function reveal(id) {
+  const el = $(id); if (!el) return;
+  el.style.animation = 'fadeUp .48s cubic-bezier(.22,.68,0,1.2) forwards';
+}
+
+/* Apariciones */
+reveal('a-hdr');
+at(TIMINGS.hook,  () => reveal('a-hook'));
+at(TIMINGS.chart, () => reveal('a-chart'));
+at(TIMINGS.cta,   () => reveal('a-cta'));
+at(TIMINGS.ftr,   () => reveal('a-ftr'));
+
+/* Expected line: fade in + already dashed, just show */
+at(TIMINGS.line_expected, () => {
+  const el = $('line-expected');
+  el.style.transition = 'opacity 0.3s ease';
+  el.style.opacity = '1';
+  /* Animate drawing using clip-rect trick via stroke-dasharray */
+  const len = 900;
+  el.setAttribute('stroke-dasharray', '10 7');
+  /* For dashed we just fade it in cleanly */
+});
+
+/* Real line: draw using stroke-dashoffset */
+at(TIMINGS.line_real, () => {
+  const el = $('line-real');
+  const len = el.getTotalLength ? el.getTotalLength() : 920;
+  el.style.strokeDasharray = len;
+  el.style.strokeDashoffset = len;
+  el.style.opacity = '1';
+  el.style.transition = 'stroke-dashoffset ' + TIMINGS.line_real_dur + 'ms cubic-bezier(.4,0,.2,1)';
+  setTimeout(() => el.style.strokeDashoffset = '0', 20);
+});
+
+/* Gap fill */
+at(TIMINGS.gap_fill, () => {
+  const el = $('gap-fill');
+  el.style.transition = 'opacity ' + TIMINGS.gap_fill_dur + 'ms ease';
+  el.style.opacity = '1';
+});
+
+/* Gap label */
+at(TIMINGS.gap_label, () => {
+  const el = $('gap-label');
+  el.style.transition = 'opacity 0.5s ease';
+  el.style.opacity = '1';
+});
+</script>
+
+<script>
+(function () {
+  const c = document.getElementById('canvas');
+  function fit() {
+    const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+    c.style.transform = 'scale(' + s + ')';
+    c.style.left = ((window.innerWidth  - 1080 * s) / 2) + 'px';
+    c.style.top  = ((window.innerHeight - 1920 * s) / 2) + 'px';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D01 — ROAS de Campaña</title>
+<style>
+:root {
+  --c-bg:      #08080F;
+  --c-accent:  #FF4B14;
+  --c-white:   #F5F5F7;
+  --c-surface: #13131E;
+  --c-muted:   #4A4A62;
+  --c-rule:    #1F1F30;
+  --font-d: 'Impact', 'Arial Black', 'Franklin Gothic Heavy', 'Arial', sans-serif;
+  --font-s: 'Helvetica Neue', 'Segoe UI', 'Arial', sans-serif;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+
+#canvas {
+  width: 1080px; height: 1920px;
+  overflow: hidden;
+  background: var(--c-bg); color: var(--c-white);
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 130px 88px 120px;
+  transform-origin: top left;
+  position: absolute; top: 0; left: 0;
+}
+
+.appear { opacity: 0; transform: translateY(28px); }
+.rule   { width: 100%; height: 1px; background: var(--c-rule); }
+
+.hdr { display: flex; flex-direction: column; gap: 32px; }
+.hdr__tag {
+  font-family: var(--font-s);
+  font-size: 25px; font-weight: 600;
+  letter-spacing: .3em; text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+.metrics { display: flex; flex-direction: column; }
+.m-block { padding: 58px 0; border-bottom: 1px solid var(--c-rule); }
+.m-block:last-child { border-bottom: none; }
+.m-label {
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--font-s);
+  font-size: 23px; font-weight: 500;
+  letter-spacing: .24em; text-transform: uppercase;
+  color: var(--c-muted); margin-bottom: 16px;
+}
+.m-label::before {
+  content: ''; display: block;
+  width: 3px; height: 24px; border-radius: 2px;
+  background: var(--c-accent); opacity: .45; flex-shrink: 0;
+}
+.m-value-row { display: flex; align-items: baseline; gap: 18px; }
+.m-value {
+  font-family: var(--font-d);
+  font-size: 132px; font-weight: 900;
+  line-height: .88; color: var(--c-white);
+  letter-spacing: -.01em; white-space: nowrap;
+}
+.m-currency {
+  font-family: var(--font-s);
+  font-size: 28px; font-weight: 400;
+  letter-spacing: .12em; color: var(--c-muted);
+  align-self: flex-end; padding-bottom: 10px;
+}
+
+.hero {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0; padding: 24px 0;
+}
+.hero__label {
+  font-family: var(--font-s);
+  font-size: 29px; font-weight: 700;
+  letter-spacing: .5em; text-transform: uppercase;
+  color: var(--c-accent); margin-bottom: 12px; padding-left: .5em;
+}
+.hero__num {
+  font-family: var(--font-d);
+  font-size: 296px; font-weight: 900;
+  line-height: .88; color: var(--c-accent);
+  letter-spacing: -.02em; white-space: nowrap;
+  text-shadow:
+    0 0 48px rgba(255,75,20,.75),
+    0 0 96px rgba(255,75,20,.38),
+    0 0 180px rgba(255,75,20,.16);
+}
+.hero__sub {
+  font-family: var(--font-s);
+  font-size: 21px; font-weight: 400;
+  letter-spacing: .2em; color: var(--c-muted);
+  margin-top: 28px; text-transform: uppercase;
+}
+
+.ftr { display: flex; flex-direction: column; gap: 26px; }
+.ftr__label {
+  font-family: var(--font-s);
+  font-size: 23px; font-weight: 400;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--c-muted); text-align: center;
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ember-pulse {
+  0%   { text-shadow: 0 0 48px rgba(255,75,20,.75), 0 0 96px rgba(255,75,20,.38), 0 0 180px rgba(255,75,20,.16); }
+  42%  { text-shadow: 0 0 72px rgba(255,75,20,1),   0 0 144px rgba(255,75,20,.6),  0 0 280px rgba(255,75,20,.28), 0 0 400px rgba(255,75,20,.1); }
+  100% { text-shadow: 0 0 48px rgba(255,75,20,.75), 0 0 96px rgba(255,75,20,.38), 0 0 180px rgba(255,75,20,.16); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .appear { opacity: 1 !important; transform: none !important; }
+  * { animation-duration: 1ms !important; animation-delay: 0ms !important; }
+}
+</style>
+</head>
+<body>
+<div id="canvas">
+
+<div class="hdr appear" id="a-hdr">
+  <span class="hdr__tag">Resultados de Campaña</span>
+  <div class="rule"></div>
+</div>
+
+<div class="metrics">
+  <div class="m-block appear" id="a-m1">
+    <div class="m-label">Inversión</div>
+    <div class="m-value-row">
+      <span class="m-value" id="val-inv">$0</span>
+      <span class="m-currency">MXN</span>
+    </div>
+  </div>
+  <div class="m-block appear" id="a-m2">
+    <div class="m-label">Retorno</div>
+    <div class="m-value-row">
+      <span class="m-value" id="val-ret">$0</span>
+      <span class="m-currency">MXN</span>
+    </div>
+  </div>
+</div>
+
+<div class="hero appear" id="a-hero">
+  <span class="hero__label">R&nbsp;&nbsp;O&nbsp;&nbsp;A&nbsp;&nbsp;S</span>
+  <span class="hero__num" id="val-roas">0×</span>
+  <span class="hero__sub">Multiplicador de inversión</span>
+</div>
+
+<div class="ftr appear" id="a-ftr">
+  <div class="rule"></div>
+  <span class="ftr__label">Campaña de catálogo &nbsp;·&nbsp; Remarketing</span>
+</div>
+
+<script>
+/* ╔═══════════════════════════════════════════════════════╗
+   ║  CONSTANTES EDITABLES — Dashboard 01                 ║
+   ╚═══════════════════════════════════════════════════════╝ */
+
+const CIFRAS = {
+  inversion:  5400,
+  retorno:    134000,
+  roas:       24.8,
+};
+
+const TIMINGS = {
+  hdr_ms:     80,
+  m1_ms:      380,
+  m2_ms:      580,
+  hero_ms:    820,
+  ftr_ms:     1500,
+  inv_start:  540,   inv_dur: 920,
+  ret_start:  820,   ret_dur: 1250,
+  roas_start: 1100,  roas_dur: 1500,
+  pulse_at:   2750,
+};
+
+function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
+function fmtMXN(n) { return '$' + Math.round(n).toLocaleString('es-MX'); }
+function fmtRoas(n, dec) { return n.toFixed(dec) + '×'; }
+
+function countUp({ elId, to, start, dur, render, ease }) {
+  setTimeout(() => {
+    const t0 = performance.now();
+    (function tick(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      document.getElementById(elId).textContent = render(to * ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    })(performance.now());
+  }, start);
+}
+
+function appear(id, delay) {
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    el.style.animation = 'fadeUp 0.55s cubic-bezier(.22,.68,0,1.2) forwards';
+  }, delay);
+}
+
+appear('a-hdr',  TIMINGS.hdr_ms);
+appear('a-m1',   TIMINGS.m1_ms);
+appear('a-m2',   TIMINGS.m2_ms);
+appear('a-hero', TIMINGS.hero_ms);
+appear('a-ftr',  TIMINGS.ftr_ms);
+
+countUp({ elId: 'val-inv',  to: CIFRAS.inversion, start: TIMINGS.inv_start,  dur: TIMINGS.inv_dur,  render: n => fmtMXN(n),       ease: easeOutCubic });
+countUp({ elId: 'val-ret',  to: CIFRAS.retorno,   start: TIMINGS.ret_start,  dur: TIMINGS.ret_dur,  render: n => fmtMXN(n),       ease: easeOutCubic });
+countUp({ elId: 'val-roas', to: CIFRAS.roas,      start: TIMINGS.roas_start, dur: TIMINGS.roas_dur, render: n => fmtRoas(n, 1),   ease: easeOutQuint });
+
+setTimeout(() => {
+  const el = document.getElementById('val-roas');
+  el.style.animation = 'ember-pulse .7s ease-in-out';
+  el.addEventListener('animationend', () => { el.style.animation = ''; }, { once: true });
+}, TIMINGS.pulse_at);
+</script>
+
+<script>
+(function scale() {
+  const canvas = document.getElementById('canvas');
+  function fit() {
+    const s = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
+    canvas.style.transform = `scale(${s})`;
+    canvas.style.left = ((window.innerWidth  - 1080 * s) / 2) + 'px';
+    canvas.style.top  = ((window.innerHeight - 1920 * s) / 2) + 'px';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+
+</div>
+</body>
+</html>
